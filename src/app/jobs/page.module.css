@@ -32,6 +32,7 @@
   flex-direction: column;
   gap: 32px;
   grid-row-start: 2;
+  background-color: #EFF1F9;
 }
 
 .main ol {
@@ -106,7 +107,7 @@ a.secondary {
 }
 
 /* Enable hover only on non-touch devices */
-@media (hover: hover) and (pointer: fine) {
+/* @media (hover: hover) and (pointer: fine) {
   a.primary:hover {
     background: var(--button-primary-hover);
     border-color: transparent;
@@ -162,4 +163,4 @@ a.secondary {
   .logo {
     filter: invert();
   }
-}
+} 
