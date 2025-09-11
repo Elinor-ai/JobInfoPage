@@ -1,34 +1,16 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useState } from "react";
 
-function stripHtmlToText(htmlString = "") {
-  // Remove tags, collapse whitespace, decode a few common entities
-  return String(htmlString)
-    .replace(/<[^>]+>/g, " ")
-    .replace(/&nbsp;/gi, " ")
-    .replace(/&amp;/gi, "&")
-    .replace(/&quot;/gi, '"')
-    .replace(/&#39;/gi, "'")
-    .replace(/\s+/g, " ")
-    .trim();
-}
 
-function getJobDescription(job) {
-  const fromHtml = stripHtmlToText(job?.original_body || "");
-  if (fromHtml) return fromHtml;
-  return String(job?.body || "").replace(/\s+/g, " ").trim();
-}
-
-export default function JobDescriptionSection({ job, title = "Job Description" }) {
+export default function JobDescriptionSection({descriptionText}) {
   const [isExpanded, setIsExpanded] = useState(false);
-  const descriptionText = useMemo(() => getJobDescription(job), [job]);
 
   if (!descriptionText) return null;
 
   return (
     <section className="bg-white p-6 md:p-8 rounded-xl shadow-sm border border-gray-200">
-      <h3 className="text-xl font-bold text-gray-800 mb-4">{title}</h3>
+      <h3 className="text-xl font-bold text-gray-800 mb-4">Job Description</h3>
 
       <div className="relative">
         <p

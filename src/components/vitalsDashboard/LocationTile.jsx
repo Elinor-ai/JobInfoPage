@@ -1,17 +1,15 @@
-// app/components/vitals/LocationTile.jsx
-'use client';
+import { MapPin } from "lucide-react";
 
-import { MapPin } from 'lucide-react';
+export default function LocationTile({ location = "" }) {
+  const parts = String(location || "")
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean);
 
-export default function LocationTile({ jobData }) {
-  const cityName = jobData?.city || jobData?.location?.city || null;
-  const stateOrRegion = jobData?.state || jobData?.location?.state || jobData?.region || null;
-  const countryName = jobData?.country || jobData?.location?.country || null;
+  if (parts.length === 0) return null;
 
-  if (!cityName && !stateOrRegion && !countryName) return null;
-
-  const mainLine = [cityName, stateOrRegion].filter(Boolean).join(', ') || countryName;
-  const subLine = !cityName && !stateOrRegion ? null : (countryName || null);
+  const mainLine = parts.length > 1 ? parts.slice(0, -1).join(", ") : parts[0];
+  const subLine  = parts.length > 1 ? parts[parts.length - 1] : null;
 
   return (
     <div className="flex flex-col items-center justify-center p-2 rounded-lg bg-blue-50">

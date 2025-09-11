@@ -1,6 +1,5 @@
 // /components/Header.jsx
-"use client";
-
+'use client'
 import { useRouter } from "next/navigation";
 import { Briefcase, MapPin, Search } from "lucide-react";
 

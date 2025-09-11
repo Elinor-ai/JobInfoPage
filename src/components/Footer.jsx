@@ -1,4 +1,3 @@
-"use client";
 
 import { Shield, Facebook, Twitter, Linkedin } from "lucide-react";
 

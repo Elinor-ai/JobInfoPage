@@ -1,137 +1,83 @@
-// components/RequirementsSection.jsx
-"use client";
+// app/components/RequirementsSection.jsx
+export default function RequirementsSection({
+  requirements,                // { mustHave, niceToHave, skills, education, certifications, languages, experience }
+  sectionTitle = null,
+  emptyStateText = "No requirements listed.",
+}) {
+  const r = requirements || {};
+  const hasLists =
+    (r.mustHave && r.mustHave.length) ||
+    (r.niceToHave && r.niceToHave.length) ||
+    (r.skills && r.skills.length) ||
+    (r.education && r.education.length) ||
+    (r.certifications && r.certifications.length) ||
+    (r.languages && r.languages.length) ||
+    (r.experience && r.experience.length);
 
-import {
-  ClipboardCheck,
-  Star,
-  GraduationCap,
-  Languages as LanguagesIcon,
-  BadgeCheck,
-  Wrench,
-} from "lucide-react";
-import { getRequirementsFromJob } from "@/public/utils/jobRequirements";
-
-export default function RequirementsSection({ job }) {
-  const {
-    mustHave,
-    niceToHave,
-    skills,
-    education,
-    certifications,
-    languages,
-    experience,
-  } = getRequirementsFromJob(job);
-
-  const hasAny =
-    mustHave.length ||
-    niceToHave.length ||
-    skills.length ||
-    education.length ||
-    certifications.length ||
-    languages.length ||
-    experience.length;
-
-  if (!hasAny) return null;
+  const Chip = ({ children }) => (
+    <span className="inline-flex items-center rounded-full bg-slate-100 px-2.5 py-1 text-xs text-slate-700 mr-2 mb-2">
+      {children}
+    </span>
+  );
 
   return (
     <section className="bg-white p-6 md:p-8 rounded-xl shadow-sm border border-gray-200">
-      <h3 className="text-xl font-bold text-gray-800 mb-4 flex items-center">
-        <ClipboardCheck className="w-6 h-6 mr-3 text-emerald-600" />
-        Requirements
-      </h3>
+      {sectionTitle && <h3 className="text-xl font-bold text-gray-800 mb-4">{sectionTitle}</h3>}
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {!!mustHave.length && (
-          <Card title="Must-have" icon={<ClipboardCheck className="w-5 h-5" />}>
-            <ul className="space-y-2">
-              {mustHave.map((item, idx) => (
-                <li key={`must-${idx}`} className="text-sm text-gray-700 flex">
-                  <span className="mt-1 mr-2 inline-block h-1.5 w-1.5 rounded-full bg-emerald-500" />
-                  <span>{item}</span>
-                </li>
-              ))}
-            </ul>
-          </Card>
-        )}
+      {!hasLists && <p className="text-sm text-gray-500">{emptyStateText}</p>}
 
-        {!!niceToHave.length && (
-          <Card title="Nice to have" icon={<Star className="w-5 h-5" />}>
-            <ul className="space-y-2">
-              {niceToHave.map((item, idx) => (
-                <li key={`nice-${idx}`} className="text-sm text-gray-700 flex">
-                  <span className="mt-1 mr-2 inline-block h-1.5 w-1.5 rounded-full bg-amber-500" />
-                  <span>{item}</span>
-                </li>
-              ))}
-            </ul>
-          </Card>
-        )}
+      {r.mustHave?.length > 0 && (
+        <div className="mb-5">
+          <h4 className="font-semibold text-gray-800 mb-2">Must-have</h4>
+          <ul className="list-disc pl-5 space-y-1">
+            {r.mustHave.map((item, i) => <li key={`must-${i}`} className="text-sm text-gray-700">{item}</li>)}
+          </ul>
+        </div>
+      )}
 
-        {!!skills.length && (
-          <Chips title="Skills" icon={<Wrench className="w-5 h-5" />} items={skills} />
-        )}
+      {r.niceToHave?.length > 0 && (
+        <div className="mb-5">
+          <h4 className="font-semibold text-gray-800 mb-2">Nice to have</h4>
+          <ul className="list-disc pl-5 space-y-1">
+            {r.niceToHave.map((item, i) => <li key={`nice-${i}`} className="text-sm text-gray-700">{item}</li>)}
+          </ul>
+        </div>
+      )}
 
-        {!!education.length && (
-          <Chips
-            title="Education"
-            icon={<GraduationCap className="w-5 h-5" />}
-            items={education}
-          />
-        )}
-
-        {!!certifications.length && (
-          <Chips
-            title="Certifications"
-            icon={<BadgeCheck className="w-5 h-5" />}
-            items={certifications}
-          />
-        )}
-
-        {!!languages.length && (
-          <Chips
-            title="Languages"
-            icon={<LanguagesIcon className="w-5 h-5" />}
-            items={languages}
-          />
-        )}
-
-        {!!experience.length && (
-          <Chips title="Experience" icon={<ClipboardCheck className="w-5 h-5" />} items={experience} />
-        )}
-      </div>
+      {(r.skills?.length || r.education?.length || r.certifications?.length || r.languages?.length || r.experience?.length) ? (
+        <div className="grid md:grid-cols-2 gap-5">
+          {r.skills?.length > 0 && (
+            <div>
+              <h5 className="text-sm font-semibold text-gray-800 mb-2">Skills</h5>
+              <div>{r.skills.map((s, i) => <Chip key={`skill-${i}`}>{s}</Chip>)}</div>
+            </div>
+          )}
+          {r.education?.length > 0 && (
+            <div>
+              <h5 className="text-sm font-semibold text-gray-800 mb-2">Education</h5>
+              <div>{r.education.map((e, i) => <Chip key={`edu-${i}`}>{e}</Chip>)}</div>
+            </div>
+          )}
+          {r.certifications?.length > 0 && (
+            <div>
+              <h5 className="text-sm font-semibold text-gray-800 mb-2">Certifications</h5>
+              <div>{r.certifications.map((c, i) => <Chip key={`cert-${i}`}>{c}</Chip>)}</div>
+            </div>
+          )}
+          {r.languages?.length > 0 && (
+            <div>
+              <h5 className="text-sm font-semibold text-gray-800 mb-2">Languages</h5>
+              <div>{r.languages.map((l, i) => <Chip key={`lang-${i}`}>{l}</Chip>)}</div>
+            </div>
+          )}
+          {r.experience?.length > 0 && (
+            <div>
+              <h5 className="text-sm font-semibold text-gray-800 mb-2">Experience</h5>
+              <div>{r.experience.map((x, i) => <Chip key={`exp-${i}`}>{x}</Chip>)}</div>
+            </div>
+          )}
+        </div>
+      ) : null}
     </section>
-  );
-}
-
-function Card({ title, icon, children }) {
-  return (
-    <div className="rounded-lg border border-gray-100 p-4">
-      <div className="mb-3 flex items-center gap-2">
-        <span className="text-gray-700">{icon}</span>
-        <h4 className="font-semibold text-gray-800">{title}</h4>
-      </div>
-      {children}
-    </div>
-  );
-}
-
-function Chips({ title, icon, items }) {
-  return (
-    <div className="rounded-lg border border-gray-100 p-4">
-      <div className="mb-3 flex items-center gap-2">
-        <span className="text-gray-700">{icon}</span>
-        <h4 className="font-semibold text-gray-800">{title}</h4>
-      </div>
-      <div className="flex flex-wrap gap-2">
-        {items.map((label, idx) => (
-          <span
-            key={`${title}-${idx}`}
-            className="inline-flex items-center rounded-full border border-gray-200 px-2.5 py-1 text-xs text-gray-700 bg-gray-50"
-          >
-            {label}
-          </span>
-        ))}
-      </div>
-    </div>
   );
 }
