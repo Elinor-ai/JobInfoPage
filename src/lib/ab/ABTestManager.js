@@ -11,7 +11,8 @@ import { GLOBAL_USER_ID_COOKIE, ADMIN_TOKEN } from "./config";
 export default class ABTestManager {
   constructor({ experiments, randomSource } = {}) {
     this.experiments = experiments || [];
-    this.randomSource = typeof randomSource === "function" ? randomSource : Math.random;
+    this.randomSource =
+      typeof randomSource === "function" ? randomSource : Math.random;
   }
 
   // Runs in middleware: ensure uid + design cookie(s), allow URL override
@@ -36,7 +37,10 @@ export default class ABTestManager {
     // Per-program design cookie
     for (const def of this.experiments) {
       const userIdCookieName = def.cookieNames?.userId || GLOBAL_USER_ID_COOKIE;
-      const userId = request.cookies.get(userIdCookieName)?.value || globalUserId || this.generateUserId();
+      const userId =
+        request.cookies.get(userIdCookieName)?.value ||
+        globalUserId ||
+        this.generateUserId();
       const variantCookieName = def.cookieNames?.variant;
 
       // 1) Optional URL override (?design=compact)
@@ -44,17 +48,29 @@ export default class ABTestManager {
         const param = def.urlOverride.param || "design";
         const variantFromUrl = request.nextUrl.searchParams.get(param);
         if (variantFromUrl && def.variants.includes(variantFromUrl)) {
-          this._setVariantCookie(response, variantCookieName, variantFromUrl, def.cookieMaxAgeDays);
+          this._setVariantCookie(
+            response,
+            variantCookieName,
+            variantFromUrl,
+            def.cookieMaxAgeDays
+          );
           continue; // respect explicit override
         }
       }
 
       // 2) Ensure a valid sticky variant cookie
-      let variant = variantCookieName ? request.cookies.get(variantCookieName)?.value : null;
+      let variant = variantCookieName
+        ? request.cookies.get(variantCookieName)?.value
+        : null;
       const isValid = variant && def.variants.includes(variant);
       if (!isValid) {
         variant = this.chooseVariant(def, userId);
-        this._setVariantCookie(response, variantCookieName, variant, def.cookieMaxAgeDays);
+        this._setVariantCookie(
+          response,
+          variantCookieName,
+          variant,
+          def.cookieMaxAgeDays
+        );
       }
     }
 
@@ -93,21 +109,32 @@ export default class ABTestManager {
         userAgent,
         referer,
       });
-      await redisClient.expire(key, Math.max(1, (def.redisTtlDays || 365) * 24 * 60 * 60));
+      await redisClient.expire(
+        key,
+        Math.max(1, (def.redisTtlDays || 365) * 24 * 60 * 60)
+      );
     });
 
     await Promise.all(tasks);
   }
 
   // Admin-only: force-assign a user to a specific variant
-  async adminForceAssign({ headers, redisClient, cookiesStore, programId, userId, variant }) {
+  async adminForceAssign({
+    headers,
+    redisClient,
+    cookiesStore,
+    programId,
+    userId,
+    variant,
+  }) {
     if (!ADMIN_TOKEN) throw new Error("ADMIN_TOKEN not set");
     const token = headers?.get?.("x-admin-token");
     if (token !== ADMIN_TOKEN) throw new Error("Unauthorized");
 
     const def = this.experiments.find((e) => e.id === programId);
     if (!def) throw new Error("Unknown programId");
-    if (!def.variants.includes(variant)) throw new Error("Invalid variant for this program");
+    if (!def.variants.includes(variant))
+      throw new Error("Invalid variant for this program");
 
     const key = `design:assignment:${programId}:${userId}`;
     await redisClient.hset(key, {
@@ -118,14 +145,22 @@ export default class ABTestManager {
       userAgent: headers?.get?.("user-agent") || "",
       referer: headers?.get?.("referer") || "",
     });
-    await redisClient.expire(key, Math.max(1, (def.redisTtlDays || 365) * 24 * 60 * 60));
+    await redisClient.expire(
+      key,
+      Math.max(1, (def.redisTtlDays || 365) * 24 * 60 * 60)
+    );
 
     // If this request belongs to that same user, refresh their cookie immediately
     const userIdCookieName = def.cookieNames?.userId || GLOBAL_USER_ID_COOKIE;
     const currentUserId = cookiesStore?.get(userIdCookieName)?.value || null;
     if (currentUserId && currentUserId === userId) {
       const res = NextResponse.json({ ok: true });
-      this._setVariantCookie(res, def.cookieNames?.variant, variant, def.cookieMaxAgeDays);
+      this._setVariantCookie(
+        res,
+        def.cookieNames?.variant,
+        variant,
+        def.cookieMaxAgeDays
+      );
       return res;
     }
     return NextResponse.json({ ok: true });
@@ -134,7 +169,10 @@ export default class ABTestManager {
   // --- Assignment logic (supports many versions + weights)
 
   chooseVariant(def, userId) {
-    const list = Array.isArray(def.variants) && def.variants.length > 0 ? def.variants : ["control"];
+    const list =
+      Array.isArray(def.variants) && def.variants.length > 0
+        ? def.variants
+        : ["control"];
     const strategy = def.assignmentStrategy || "weightedHash";
     const weights = this._normalizeWeights(def.allocation, list);
 

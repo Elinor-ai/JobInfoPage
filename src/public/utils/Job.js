@@ -1,4 +1,5 @@
 import { jobs } from "@/app/data/jobData";
+// take data only from v2
 
 /**
  * Centralized job data model:

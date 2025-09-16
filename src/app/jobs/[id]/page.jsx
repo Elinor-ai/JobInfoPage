@@ -4,7 +4,7 @@ import ABTestManager from '@/lib/ab/ABTestManager';
 import { experiments } from "@/lib/ab/config";
 import { getVariantComponent } from "@/lib/ab/variantRegistry";
 import AbClientBootstrap from "@/components/AbClientBootstrap";
-import Job from "@/public/utils/job";
+import Job from "@/public/utils/Job";
 
 // TODO: point this to your real data source
 // If you already fetch from an API/DB, keep that logic and just return `job`.
