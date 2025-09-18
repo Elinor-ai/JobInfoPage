@@ -6,9 +6,9 @@ const { v4: uuidv4 } = require('uuid');
 require('dotenv').config();
 // const { cookies } = require('next/headers');
 
-const redisClient = require('./redis');
-const decider = require('./decider');
-const jobRepo = require('./data/jobRepository');
+const redisClient = require('../src/lib/redis');
+const decider = require('../src/lib/decider');
+const jobRepo = require('../src/lib/jobRepository');
 
 const app = express();
 app.use(express.json());

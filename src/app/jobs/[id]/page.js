@@ -1,6 +1,6 @@
 import RenderDesign from '@/components/RenderDesign';
 import { cookies } from 'next/headers';
-import { getJobById } from 'server/data/jobRepository';
+import { getJobById } from '@/lib/jobRepository';
 
 export default async function JobPage({ params, searchParams }) {
   const { id } = params;
