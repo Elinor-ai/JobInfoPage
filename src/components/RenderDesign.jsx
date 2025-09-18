@@ -1,7 +1,7 @@
 import React from 'react';
-import JobPageClassic from '@/components/varients/JobPageClassic';
-import JobPageLight from '@/components/varients/JobPageLight';
-import JobPagePanel from '@/components/varients/JobPagePanel';
+import JobPageClassic from '@/components/variants/JobPageClassic';
+import JobPageLight from '@/components/variants/JobPageLight';
+import JobPagePanel from '@/components/variants/JobPagePanel';
 
 const componentMap = {
   classic: JobPageClassic,
