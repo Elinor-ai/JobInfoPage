@@ -1,4 +1,4 @@
-import RenderDesign from '../../../../components/RenderDesign';
+import RenderDesign from '@/components/RenderDesign';
 import { cookies } from 'next/headers';
 
 export default async function Page({ params, searchParams }) {

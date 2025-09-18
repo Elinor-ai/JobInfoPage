@@ -1,4 +1,4 @@
-const variants = ['DefaultDesign', 'DesignVariantA', 'DesignVariantB'];
+const variants = ['classic', 'light', 'panel'];
 
 async function basicRandomStrategy(userId, flow, metadata = {}) {
   const index = Math.floor(Math.random() * variants.length);
