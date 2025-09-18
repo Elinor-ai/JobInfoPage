@@ -1,3 +1,5 @@
+// server/redis.js
+
 // This module initializes a Redis client. 
 // It reads the Redis connection URL from an environment variable and exports the connected client for use in other modules. 
 // The module handles connection and error events gracefully
@@ -12,12 +14,16 @@ redisClient.on('error', (err) => {
   console.error('Redis client error', err);
 });
 
-async function connectRedis() {
+// async function connectRedis() {
+//   if (!redisClient.isOpen) {
+//     await redisClient.connect();
+//   }
+// }
+
+(async () => {
   if (!redisClient.isOpen) {
     await redisClient.connect();
   }
-}
-
-connectRedis();
+})()
 
 module.exports = redisClient;

@@ -8,8 +8,6 @@ function BenefitIcon({ benefit, className }) {
   return <Leaf className={className} />;
 }
 export default function BenefitsSection({benefits}) {
-
-  console.log('Sbenefits', benefits)
   if (!benefits) return null;
   const resolvedBenefits = Array.isArray(benefits) ? benefits : getBenefitsFromJob(job);
 

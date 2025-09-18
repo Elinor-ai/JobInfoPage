@@ -9,6 +9,8 @@ import JobHeader from "@/components/JobHeader";
 import JobDescriptionSection from "@/components/JobDescriptionSection";
 
 export default function JobPageLight({ job }) {
+    console.log('JobPageLight', job)
+
   const vm = {
     title: job?.title || "Job Title",
     company: job?.company || "Company",
@@ -33,12 +35,6 @@ export default function JobPageLight({ job }) {
     url: job?.url || "#",
     id: job?.id,
   };
-
-  console.log({
-  contractTimeLabel: vm.contractTimeLabel,
-  hoursPerWeek: vm.hoursPerWeek,
-  specialFlags: vm.specialFlags,
-});
 
   const hasRequirements =
     (vm.requirements.mustHave?.length ?? 0) > 0 ||

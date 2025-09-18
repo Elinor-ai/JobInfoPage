@@ -1,7 +1,7 @@
 const { MongoClient, ObjectId } = require('mongodb');
 
 const uri = process.env.MONGODB_URI || 'mongodb://localhost:27017';
-const dbName = process.env.MONGODB_DB || 'jobs';
+const dbName = process.env.MONGODB_DB || 'JobData';
 let db;
 
 async function connect() {

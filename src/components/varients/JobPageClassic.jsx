@@ -10,7 +10,8 @@ import {
 } from "lucide-react";
 
 export default function JobPageClassic({ job }) {
-  // Build the view-model ONLY from Job instance methods/fields
+    console.log('JobPageClassic', job)
+
   const vm = {
     title: job?.title || "Job Title",
     company: job?.company || "Company",

@@ -1,7 +1,8 @@
 import RenderDesign from '@/components/RenderDesign';
 import { cookies } from 'next/headers';
+import { getJobById } from 'server/data/jobRepository';
 
-export default async function Page({ params, searchParams }) {
+export default async function JobPage({ params, searchParams }) {
   const { id } = params;
   const cookieStore = cookies();
   const cookieHeader = cookieStore.toString();
@@ -22,20 +23,10 @@ export default async function Page({ params, searchParams }) {
     },
     cache: 'no-store',
   });
-
+ 
   const decideData = await decideRes.json();
   const variant = decideData.variant;
-
-  // Fetch job data
-  const jobRes = await fetch(`${apiBase}/job/${id}`, {
-    headers: {
-      cookie: cookieHeader,
-    },
-    cache: 'no-store',
-  });
-
-  const jobData = await jobRes.json();
-  const job = jobData.job;
+  const job = await getJobById(id)
 
   return <RenderDesign variant={variant} job={job} />;
 }

@@ -1,9 +1,10 @@
 import JobDescriptionSection from "@/components/JobDescriptionSection";
 import BenefitsSection from "@/components/BenefitsSection";
-import RequirementsSection from "@/components/RequirementsSection"; // 👈 add this
+import RequirementsSection from "@/components/RequirementsSection"; 
 import PrimaryCTA from "@/components/PrimaryCTA";
 
 export default function JobPagePanel({ job }) {
+  console.log('JobPagePanel', job)
   // Build a simple view-model once
   const vm = {
     title: job?.title || "Job Title",
