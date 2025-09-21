@@ -1,16 +1,10 @@
 import RenderDesign from '@/components/RenderDesign';
-import { cookies } from 'next/headers';
 import { getJobById } from '@/lib/jobRepository';
 import { notFound } from 'next/navigation';
+import Job from '@/public/utils/Job';
 
 export default async function JobPage({ params, searchParams }) {
   const { id } = params;
-
-  const cookieStore = cookies();
-  const cookieHeader = cookieStore
-    .getAll()
-    .map(({ name, value }) => `${name}=${value}`)
-    .join('; ');
 
   const flow = searchParams?.flow || '';
   const metadataEntries = Object.entries(searchParams || {}).filter(
@@ -20,13 +14,10 @@ export default async function JobPage({ params, searchParams }) {
     .map(([key, value]) => `metadata[${encodeURIComponent(key)}]=${encodeURIComponent(value)}`)
     .join('&');
 
-  const apiBase = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
-  const decideUrl = `${apiBase}/decide?flow=${encodeURIComponent(flow)}${metadataQuery ? '&' + metadataQuery : ''}`;
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
+  const decideUrl = `${baseUrl}/api/decide?flow=${encodeURIComponent(flow)}${metadataQuery ? '&' + metadataQuery : ''}`;
 
-  const decideRes = await fetch(decideUrl, {
-    headers: { cookie: cookieHeader },
-    cache: 'no-store',
-  });
+  const decideRes = await fetch(decideUrl, { cache: 'no-store' });
 
   if (!decideRes.ok) {
     throw new Error('Decide API failed');
@@ -35,8 +26,14 @@ export default async function JobPage({ params, searchParams }) {
   const decideData = await decideRes.json();
   const variant = decideData.variant;
 
-  const job = await getJobById(id);
-  if (!job) notFound();
+  const jobRecord = await getJobById(id);
 
-  return <RenderDesign variant={variant} job={job} />;
+  const job = new Job(id, jobRecord)
+
+   if (!job) notFound();
+
+  const jobSummary = job.toClassicViewModel()
+   
+
+  return <RenderDesign variant={variant} job={jobSummary} />;
 }
