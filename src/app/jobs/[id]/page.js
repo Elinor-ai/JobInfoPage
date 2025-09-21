@@ -1,15 +1,21 @@
 import RenderDesign from '@/components/RenderDesign';
 import { cookies } from 'next/headers';
 import { getJobById } from '@/lib/jobRepository';
+import { notFound } from 'next/navigation';
 
 export default async function JobPage({ params, searchParams }) {
   const { id } = params;
+
   const cookieStore = cookies();
-  const cookieHeader = cookieStore.toString();
+  const cookieHeader = cookieStore
+    .getAll()
+    .map(({ name, value }) => `${name}=${value}`)
+    .join('; ');
 
   const flow = searchParams?.flow || '';
-  // Build metadata query parameters from searchParams except flow
-  const metadataEntries = Object.entries(searchParams || {}).filter(([key]) => key !== 'flow');
+  const metadataEntries = Object.entries(searchParams || {}).filter(
+    ([key]) => key !== 'flow'
+  );
   const metadataQuery = metadataEntries
     .map(([key, value]) => `metadata[${encodeURIComponent(key)}]=${encodeURIComponent(value)}`)
     .join('&');
@@ -18,15 +24,19 @@ export default async function JobPage({ params, searchParams }) {
   const decideUrl = `${apiBase}/decide?flow=${encodeURIComponent(flow)}${metadataQuery ? '&' + metadataQuery : ''}`;
 
   const decideRes = await fetch(decideUrl, {
-    headers: {
-      cookie: cookieHeader,
-    },
+    headers: { cookie: cookieHeader },
     cache: 'no-store',
   });
- 
+
+  if (!decideRes.ok) {
+    throw new Error('Decide API failed');
+  }
+
   const decideData = await decideRes.json();
   const variant = decideData.variant;
-  const job = await getJobById(id)
+
+  const job = await getJobById(id);
+  if (!job) notFound();
 
   return <RenderDesign variant={variant} job={job} />;
 }
