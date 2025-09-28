@@ -10,7 +10,7 @@ const redisClient = require('../redis')
 
 async function getVariant(userId, flow = 'default', metadata = {}) {
   const strategy = strategies[flow]|| strategies.default;
-  const cacheKey = `varient:${userId}:${flow}`;
+  const cacheKey = `variant:${userId}:${flow}`;
 
   if (redisClient && redisClient.isReady) {
     try {
