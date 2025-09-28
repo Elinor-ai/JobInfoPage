@@ -28,6 +28,7 @@ function startCase(key = "") {
 }
 
 export default function JobPageClassic({ job }) {
+  console.log('classic')
   const {
     title = "Job Title",
     company = "Company",

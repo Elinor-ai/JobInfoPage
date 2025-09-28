@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 
 export default function JobPagePanel({ job }) {
+  console.log('panel')
   // --- Accept Job instance OR summary POJO ---
   const isJob =
     typeof job?.getLocation === "function" ||

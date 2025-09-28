@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 
 export default function JobPageLight({ job }) {
+  console.log('light')
   const {
     title = "Job Title",
     company = "Company",
