@@ -1,192 +1,225 @@
-// Job.js
+// public/utils/Job.js
 export default class Job {
   constructor(jobId, jobRecord) {
     this.id = jobId ?? jobRecord?._id?.$oid ?? null;
-    this.job = jobRecord || {};
-    this.v2 = this.job?.job_metadata_v2 || {};
+    this.raw = jobRecord || {};
+    this.v2 = this.raw?.job_metadata_v2 || {};
   }
 
-  // ---------- MUST-HAVE ----------
+  /* ------------------------- basic getters ------------------------- */
   getTitle() {
-    return this.job?.title || "";
-  }
-  getBody() {
-    return this.job?.body || "";
+    return this.raw?.title || "";
   }
   getCompany() {
-    return this.job?.company || "";
+    return this.raw?.company || "";
   }
-
-  // "city, state" or null
-  getLocation() {
-    const city = this.job?.city || null;
-    const state = this.job?.state || null;
-    return city || state ? [city, state].filter(Boolean).join(", ") : null;
-  }
-
-  // ---------- CONDITIONAL FIELDS ----------
-  getInsertedDbAt() {
-    const raw = this.job?.db_inserted_at?.$date || null;
-    if (!raw) return null;
-    const d = new Date(raw);
-    const now = new Date();
-    return d.getFullYear() === now.getFullYear() &&
-      d.getMonth() === now.getMonth()
-      ? d.toISOString()
-      : null;
-  }
-
-  static #normalizeSalary(val) {
-    const s = String(val ?? "").trim();
-    if (!s) return null;
-    if (/^cant[_\s-]*determine$/i.test(s)) return null;
-    if (/^(n\/a|na|none|null|not\s+specified|unspecified)$/i.test(s))
-      return null;
-    return s;
-  }
-
-  getSalary() {
-    const raw = this.v2?._salary ?? this.job?.salary ?? null;
-    return Job.#normalizeSalary(raw);
-  }
-
-  getLogo() {
-    return this.job?.logo ? String(this.job.logo) : null;
-  }
-  // getSalary() { return this.v2?._salary || this.job?.salary || null; }
   getUrl() {
-    return this.job?.url || "";
+    return this.raw?.url || "#";
   }
+  getLogo() {
+    return this.raw?.logo ? String(this.raw.logo) : null;
+  }
+  getBody() {
+    return String(this.raw?.body || "");
+  }
+
+  getLocation() {
+    const city = this.raw?.city || null;
+    const state = this.raw?.state || null;
+    const merged = [city, state].filter(Boolean).join(", ");
+    return merged || this.raw?.location || "";
+  }
+  isImmediateStart() {
+    return this.v2?._isImmediateStart === true;
+  }
+
+  /* --------------------------- salary ------------------------------ */
+  getSalary() {
+    // Prefer v2 salary, fall back to top-level salary
+    const sourceSalary = this.v2?._salary ?? this.raw?.salary ?? null;
+    if (sourceSalary == null) return null;
+
+    const normalizedText = String(sourceSalary).trim();
+    if (!normalizedText) return null;
+
+    // Strings that mean “no usable salary”
+    const normalizedLower = normalizedText.toLowerCase();
+    const INVALID_MARKERS = new Set([
+      "cant_determine",
+      "cannot_determine",
+      "n/a",
+    ]);
+    if (INVALID_MARKERS.has(normalizedLower)) return null;
+
+    // Otherwise, return the clean string for display
+    return normalizedText;
+  }
+
+  /* ------------------------ benefits & flags ------------------------ */
   getBenefits() {
-    return Array.isArray(this.v2?._benefits) ? this.v2._benefits : [];
-  }
-
-  // ---------- PRIVATE STATIC HELPERS ----------
-  static #dedupeStrings(items = []) {
-    const seen = new Set();
-    const out = [];
-    for (const raw of items) {
-      const v = String(raw ?? "").trim();
-      if (!v) continue;
-      const k = v.toLowerCase();
-      if (seen.has(k)) continue;
-      seen.add(k);
-      out.push(v);
-    }
-    return out;
-  }
-
-  static #clampParagraph(text, maxChars = 420) {
-    const t = String(text || "").trim();
-    if (t.length <= maxChars) return t;
-    const slice = t.slice(0, maxChars);
-    const lastStop = Math.max(
-      slice.lastIndexOf(". "),
-      slice.lastIndexOf("! "),
-      slice.lastIndexOf("? ")
-    );
-    if (lastStop > 200) return slice.slice(0, lastStop + 1).trim();
-    return slice.replace(/\s+\S*$/, "").trim() + "…";
-  }
-
-  static #hasSalaryPeriod(s) {
-    return /\b(per\s*(annum|year)|p\.?a\.?)\b/i.test(String(s || ""));
-  }
-
-  static #normalizeBool(val) {
-    if (typeof val === "boolean") return val;
-    if (typeof val === "number") return val !== 0;
-    if (typeof val === "string") {
-      const v = val.trim().toLowerCase();
-      if (["true", "1", "yes", "y"].includes(v)) return true;
-      if (["false", "0", "no", "n"].includes(v)) return false;
-    }
-    return Boolean(val);
-  }
-
-  // Collect ONLY true booleans from job_metadata_v2 that start with _is*
-  getTrueV2Booleans() {
-    const out = {};
-    for (const [k, v] of Object.entries(this.v2 || {})) {
-      if (!k.startsWith("_is")) continue;
-      if (!Job.#normalizeBool(v)) continue;
-      // _isPartTime -> isPartTime
-      const normalizedKey = k.replace(/^_/, "");
-      out[normalizedKey] = true;
-    }
-    return out;
-  }
-
-  // ---------- CONVENIENCE DERIVATIONS ----------
-  getTeaserV2(max = 420) {
-    return Job.#clampParagraph(this.getBody(), max);
-  }
-
-  getBenefitsLimited(limit = 5) {
-    return Job.#dedupeStrings(this.getBenefits()).slice(0, limit);
-  }
-
-  getSalarySuffix() {
-    const s = this.getSalary();
-    if (!s) return "";
-    return Job.#hasSalaryPeriod(s) ? "" : " p.a.";
-  }
-
-  static #sentences(text = "") {
-    const flat = String(text || "")
-      .replace(/\s+/g, " ")
-      .trim();
-    if (!flat) return [];
-    return flat
-      .split(/(?<=[.!?])\s+(?=[A-Z0-9(])/g)
-      .map((s) => s.replace(/^[\-\u2022•\s]+/, "").trim())
+    const arr = Array.isArray(this.v2?._benefits) ? this.v2._benefits : [];
+    return arr
+      .map((b) => (typeof b === "string" ? b.trim() : String(b ?? "").trim()))
       .filter(Boolean);
   }
 
-  // public: first N points from body
-  getBodyPoints(limit = 3) {
-    return Job.#sentences(this.getBody()).slice(0, limit);
+  getEntryLevelLabel() {
+    const raw = this.v2?._jobLevel ?? this.raw?.job_metadata?._jobLevel ?? null;
+    if (!raw) return null;
+    const norm = String(raw).trim().toLowerCase().replace(/[-_]/g, " ");
+    if (norm === "entry level" || norm === "entrylevel" || norm === "entry") {
+      return "Entry Level";
+    }
+    return null;
   }
 
-  // ---------- OUTPUT SHAPES ----------
-  toSummaryV2() {
-    return {
-      id: this.id,
-      title: this.getTitle(),
-      body: this.getBody(),
-      location: this.getLocation(),
-      company: this.getCompany(),
-      inserted_db_at: this.getInsertedDbAt(),
-      logo: this.getLogo(),
-      salary: this.getSalary(),
-      url: this.getUrl(),
-      benefits: this.getBenefits(),
-      // spread all TRUE booleans from job_metadata_v2 (_is*)
-      ...this.getTrueV2Booleans(),
+  /* --------------------------- booleans ----------------------------- */
+  #trueV2Bools() {
+    const trueBooleanFlags = {};
+    const v2metadata = this.v2 || {};
+
+    for (const [fieldName, fieldValue] of Object.entries(v2metadata)) {
+      if (!fieldName.startsWith("_is")) continue;
+      if (fieldValue === true) {
+        const normalizedFlagName = fieldName.replace(/^_/, "");
+        trueBooleanFlags[normalizedFlagName] = true;
+      } // _isHybrid -> isHybrid
+    }
+    return trueBooleanFlags;
+  }
+
+  getWorkStyle() {
+    const f = this.#trueV2Bools();
+    if (f.isFullyRemote) return "Fully Remote";
+    if (f.isHybrid) return "Hybrid";
+    return "";
+  }
+
+  getJobType() {
+    const ct = this.raw?.contract_type;
+    if (ct)
+      return String(ct)
+        .replace(/_/g, " ")
+        .replace(/\b\w/g, (c) => c.toUpperCase());
+    const f = this.#trueV2Bools();
+    if (f.isPartTime) return "Part-time";
+    return "";
+  }
+
+  getHighlights() {
+    const LABELS = {
+      isPartTime: "Part-time",
+      isHybrid: "Hybrid working",
+      isNoExperience: "No experience required",
+      isGig: "Gig job",
+      isTemp: "Temporary",
+      isCustomerService: "Customer service",
+      isImmediateStart: "Immediate start!",
+      isManagement: "Management",
+      isFullyRemote: "Remote",
     };
+    const f = this.#trueV2Bools();
+    const startCase = (s) =>
+      String(s)
+        .replace(/^is/, "")
+        .replace(/_/g, " ")
+        .replace(/([A-Z])/g, " $1")
+        .trim()
+        .replace(/^\w/, (c) => c.toUpperCase());
+    return Object.keys(f).map((k) => LABELS[k] || startCase(k));
   }
 
-  // UI-ready POJO for your classic layout
+  /* --------------------------- posted ago --------------------------- */
+  static #timeAgo(dateLike) {
+    if (!dateLike) return null;
+    const date = new Date(dateLike);
+    if (Number.isNaN(+date)) return null;
+
+    const secondsElapsed = Math.floor((Date.now() - date.getTime()) / 1000);
+    const UNITS = [
+      ["year", 31536000],
+      ["month", 2592000],
+      ["day", 86400],
+      ["hour", 3600],
+      ["minute", 60],
+    ];
+
+    for (const [unitName, unitSecs] of UNITS) {
+      const value = Math.floor(secondsElapsed / unitSecs);
+      if (value >= 1) return `${value} ${unitName}${value > 1 ? "s" : ""} ago`;
+    }
+    return "Just now";
+  }
+
+  getPostedAgo() {
+    const candidateDate =
+      this.raw?.date_posted ||
+      this.raw?.inserted_db_at ||
+      this.raw?.db_inserted_at?.$date ||
+      null;
+
+    const postedAt = candidateDate ? new Date(candidateDate) : null;
+    if (!(postedAt instanceof Date) || Number.isNaN(+postedAt)) return null;
+
+    // Hide if older than ~90 days
+    const NINETY_DAYS_MS = 90 * 24 * 60 * 60 * 1000;
+    const ageMs = Date.now() - postedAt.getTime();
+    if (ageMs > NINETY_DAYS_MS) return null;
+
+    return Job.#timeAgo(postedAt);
+  }
+
+  getWorkEnvironment() {
+    const workEnvironmentRaw = this.v2?._workEnvironment;
+
+    const normalizedList = Array.isArray(workEnvironmentRaw)
+      ? workEnvironmentRaw
+      : typeof workEnvironmentRaw === "string"
+      ? [workEnvironmentRaw]
+      : [];
+
+    const uniqueLowerSet = new Set();
+    const environments = [];
+    for (const env of normalizedList) {
+      const label = String(env ?? "").trim();
+      if (!label) continue;
+      const labelLower = label.toLowerCase();
+      if (
+        labelLower === "cant_determine" ||
+        labelLower === "cannot_determine" ||
+        labelLower === "none"
+      )
+        continue;
+
+      if (uniqueLowerSet.has(labelLower)) continue;
+      uniqueLowerSet.add(labelLower);
+      environments.push(label);
+    }
+
+    return environments.length ? environments : null;
+  }
+
+  /* --------------------------- view model --------------------------- */
   toClassicViewModel() {
-    const salary = this.getSalary();
+    const entryLevel = this.getEntryLevelLabel();
     return {
       id: this.id,
       title: this.getTitle(),
       company: this.getCompany(),
       logo: this.getLogo(),
       location: this.getLocation(),
-
-      bodyPoints: this.getBodyPoints(3),
+      url: this.getUrl(),
+      salary: this.getSalary(),
+      workStyle: this.getWorkStyle(),
+      isEntryLevel: this.getEntryLevelLabel(),
+      workEnvironment: this.getWorkEnvironment(),
+      jobType: this.getJobType(),
       bodyFull: this.getBody(),
-
-      salary: salary || "",
-      salarySuffix: this.getSalarySuffix(),
-      url: this.getUrl() || "#",
-      isNewThisMonth: Boolean(this.getInsertedDbAt()),
-      benefits: this.getBenefitsLimited(5),
-
-      // include TRUE booleans (e.g., isPartTime, isHybrid, isNoExperience, …)
-      ...this.getTrueV2Booleans(),
+      postedAgo: this.getPostedAgo(),
+      highlights: this.getHighlights(),
+      benefits: this.getBenefits(),
+      ...(entryLevel ? { jobLevel: entryLevel } : {}),
+      isImmediateStart: this.isImmediateStart(),
     };
   }
 }

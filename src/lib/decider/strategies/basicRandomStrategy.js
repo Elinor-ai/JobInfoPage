@@ -1,4 +1,4 @@
-const variants = ['classic', 'light', 'panel', 'minimal'];
+const variants = ['classic', 'light', 'panel', 'benefits'];
 
 function fnv1a(str) {
   let hash = 0x811c9dc5;

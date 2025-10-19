@@ -1,14 +1,7 @@
-// /components/Header.jsx
 'use client'
 import { useRouter } from "next/navigation";
 import { Briefcase, MapPin, Search } from "lucide-react";
 
-/**
- * Props:
- * - jobId?: string               // if provided, searches go to /jobs/[jobId]?q=&l=
- * - initialSearchTerm?: string   // prefill “job title or keyword”
- * - initialLocation?: string     // prefill “location”
- */
 export default function Header({
   jobId,
   initialSearchTerm = "",

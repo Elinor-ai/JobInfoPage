@@ -1,31 +1,9 @@
-// app/(components)/JobPageClassicFlexible.jsx
+// app/(components)/JobPageClassic.jsx
 "use client";
 
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import Link from "next/link";
-import { Building2, MapPin, Gift, PoundSterling, CheckCircle2 } from "lucide-react";
-
-const LABELS = {
-  isPartTime: "Part-time",
-  isHybrid: "Hybrid working",
-  isNoExperience: "No experience required",
-  isGig: "Gig job",
-  isTemp: "Temporary",
-  isCustomerService: "Customer service",
-  isImmediateStart: "Immediate start!",
-  isManagement: "Management",
-  isFullyRemote: "Remote",
-};
-
-// fallback prettifier for unknown boolean keys
-function startCase(key = "") {
-  return String(key)
-    .replace(/^is/, "")
-    .replace(/([A-Z])/g, " $1")
-    .replace(/_/g, " ")
-    .trim()
-    .replace(/^\w/, c => c.toUpperCase());
-}
+import { Building2, MapPin, Gift, Wallet, CheckCircle2, Clock } from "lucide-react";
 
 export default function JobPageClassic({ job }) {
   console.log('classic')
@@ -34,30 +12,21 @@ export default function JobPageClassic({ job }) {
     company = "Company",
     logo,
     location,
-    bodyPoints = [],
     bodyFull = "",
-    salary = "",
-    salarySuffix = "",
+    salary = null,
     url = "#",
-    isNewThisMonth = false,
+    postedAgo,
+    isNewThisMonth,
     benefits = [],
+    highlights = [],
   } = job || {};
+  console.log('job', job)
 
-  // Build highlights from ANY is* === true on the summary object
-  const highlights = useMemo(() => {
-    if (!job || typeof job !== "object") return [];
-    return Object.entries(job)
-      .filter(([k, v]) => k.startsWith("is") && v === true)
-      .map(([k]) => LABELS[k] || startCase(k));
-  }, [job]);
-
-  // Salary visibility (treat "cant_determine" as missing)
-  const rawSalary = String(salary || "").trim();
-  const hasSalary =
-    rawSalary.length > 0 && !/^cant[_\s-]*determine$/i.test(rawSalary);
-  const salaryDisplay = hasSalary ? `${rawSalary}${salarySuffix || ""}` : "";
+  const hasSalary = salary != null;
 
   const [expanded, setExpanded] = useState(false);
+  const fullText = String(bodyFull || "").trim();
+  const needsToggle = fullText.length > 420;
 
   return (
     <div className="mx-auto max-w-6xl p-4 md:p-6 lg:p-8">
@@ -65,26 +34,35 @@ export default function JobPageClassic({ job }) {
         {/* LEFT: Main card */}
         <section className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 md:p-8">
           {/* Header */}
-          <div className="flex items-start gap-4">
+          <div className="flex items-start gap-4 min-w-0">
             <img
               src={logo || "https://placehold.co/56x56/eef2f7/667085?text=Logo"}
               alt={`${company} logo`}
               className="h-14 w-14 rounded-lg object-contain bg-slate-100 p-1"
             />
             <div className="min-w-0">
-              <h1 className="text-3xl font-bold leading-tight text-slate-900">
+              <h1 className="
+                text-2xl md:text-3xl font-bold leading-tight text-slate-900
+                break-words hyphens-auto
+              ">
                 {title}
               </h1>
 
-              <div className="mt-2 flex flex-wrap items-center gap-4 text-slate-600">
-                <span className="flex items-center gap-2">
+              <div className="mt-2 flex flex-wrap items-center gap-4 text-slate-600 min-w-0">
+                <span className="flex items-center gap-2 min-w-0">
                   <Building2 className="h-4 w-4" />
-                  <span className="truncate">{company}</span>
+                  <span className="block truncate max-w-[14rem] sm:max-w-[20rem]">{company}</span>
                 </span>
                 {location ? (
-                  <span className="flex items-center gap-2">
+                  <span className="flex items-center gap-2 min-w-0">
                     <MapPin className="h-4 w-4" />
-                    <span className="truncate">{location}</span>
+                    <span className="block truncate max-w-[12rem] sm:max-w-[16rem]">{location}</span>
+                  </span>
+                ) : null}
+                {postedAgo ? (
+                  <span className="flex items-center gap-2 min-w-0">
+                    <Clock className="h-4 w-4" />
+                    <span className="block truncate max-w-[10rem] sm:max-w-[14rem]">{postedAgo}</span>
                   </span>
                 ) : null}
               </div>
@@ -104,41 +82,34 @@ export default function JobPageClassic({ job }) {
               Job Description
             </h3>
 
-            {!expanded ? (
-              <>
-                <ul className="space-y-3">
-                  {(bodyPoints || []).map((p, i) => (
-                    <li key={`point-${i}`} className="text-slate-700 leading-relaxed">
-                      • {p}
-                    </li>
-                  ))}
-                </ul>
-                {bodyFull && (
-                  <button
-                    onClick={() => setExpanded(true)}
-                    className="mt-3 inline-flex items-center text-indigo-600 hover:text-indigo-700 font-semibold"
-                  >
-                    Read more
-                  </button>
-                )}
-              </>
-            ) : (
-              <>
-                <p className="whitespace-pre-wrap text-slate-700 leading-relaxed">
-                  {bodyFull}
-                </p>
-                <button
-                  onClick={() => setExpanded(false)}
-                  className="mt-3 inline-flex items-center text-indigo-600 hover:text-indigo-700 font-semibold"
-                >
-                  Show less
-                </button>
-              </>
+            <div className="relative">
+              <p
+                className={[
+                  "whitespace-pre-line text-slate-700 leading-relaxed transition-all duration-300 ease-in-out",
+                  expanded ? "" : "max-h-40 overflow-hidden"
+                ].join(" ")}
+              >
+                {fullText}
+              </p>
+
+              {!expanded && needsToggle && (
+                <div className="pointer-events-none absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-white to-transparent" />
+              )}
+            </div>
+
+            {needsToggle && (
+              <button
+                onClick={() => setExpanded(v => !v)}
+                className="mt-3 inline-flex items-center text-indigo-600 hover:text-indigo-700 font-semibold"
+                aria-expanded={expanded}
+              >
+                {expanded ? "Show less" : "Read more"}
+              </button>
             )}
           </div>
 
           {/* Benefits & Perks */}
-          {benefits?.length ? (
+          {benefits.length > 0 && (
             <>
               <div className="my-6 border-t border-slate-200" />
               <div>
@@ -155,23 +126,25 @@ export default function JobPageClassic({ job }) {
                 </ul>
               </div>
             </>
-          ) : null}
+          )}
         </section>
 
         {/* RIGHT: Sidebar cards */}
         <aside className="space-y-4">
-          {/* Salary + Apply (only if we truly have salary) */}
+          {/* Salary + Apply (only when salary is provided by Job class) */}
           {hasSalary ? (
             <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-5">
               <div className="flex items-center justify-between">
                 <span className="uppercase text-xs font-semibold tracking-wide text-slate-500">
                   Salary
                 </span>
-                <PoundSterling className="h-5 w-5 text-slate-400" />
+                <Wallet className="h-5 w-5 text-slate-400" />
               </div>
+
               <div className="mt-1 text-3xl font-bold text-slate-900">
-                {salaryDisplay}
+                {salary}
               </div>
+
               <Link
                 href={url || "#"}
                 target={url && url !== "#" ? "_blank" : undefined}
@@ -181,10 +154,10 @@ export default function JobPageClassic({ job }) {
               </Link>
             </div>
           ) : (
-            // Apply-only card when salary is missing
+            // Apply-only when salary is missing
             <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-5">
               <div className="text-sm text-slate-600">
-                Compensation discussed during the interview process.
+                Compensation will be discussed during the interview.
               </div>
               <Link
                 href={url || "#"}
@@ -196,7 +169,7 @@ export default function JobPageClassic({ job }) {
             </div>
           )}
 
-          {/* Job Snapshot */}
+          {/* Snapshot */}
           <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-5">
             <h4 className="text-lg font-semibold text-slate-900 mb-3">
               Job Snapshot
@@ -218,8 +191,8 @@ export default function JobPageClassic({ job }) {
                 </div>
               </div>
 
-              {/* Highlights from any is* booleans */}
-              {highlights.length ? (
+              {/* Highlights (already normalized by Job.getHighlights) */}
+              {Array.isArray(highlights) && highlights.length > 0 && (
                 <div className="flex items-start gap-3">
                   <div className="h-9 w-9 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center">
                     <CheckCircle2 className="h-4 w-4" />
@@ -240,7 +213,7 @@ export default function JobPageClassic({ job }) {
                     </div>
                   </div>
                 </div>
-              ) : null}
+              )}
             </div>
           </div>
         </aside>
